@@ -10,23 +10,39 @@ const LOGO = `data:image/png;base64,${b64('logo.png')}`;
 const C = { navy: '#060C17', blue: '#2D5FC2', red: '#FB0120', white: '#FFFFFF', gold: '#F2C230' };
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-// Top-down 3v3 pitch, drawn like the real system: blue inflatable barrier on the long sides, white end barriers
-// with a small goal set into each end, flat grass/turf/court floor. No goalkeeper.
+// Top-down 3v3 pitch, drawn like the real system: blue inflatable barrier on the long sides with a narrow white halfway band,
+// white end barriers with a small goal set into each end, flat grass/turf/court floor, one red ball. No goalkeeper.
+// Luis, 13 Nov: no halfway line or centre circle on the floor; the pitch always sits on navy (see claude/arte-kit.md).
 const pitch = (w, h, op = .16) => {
   const m = 130, top = 175, bot = 150, pw = w - 2 * m, ph = Math.min(h - top - bot, pw * 1.45), y0 = top + (h - top - bot - ph) / 2;
   const t = 24, gw = 120, cx = w / 2, BL = '#3B8FE0', WH = '#F4F6FA';
+  const r = t / 2, X1 = cx - gw / 2, X2 = cx + gw / 2; // corners mitred at 45° (Luis, 13 Nov); rounded ends at the goal gaps
   return `<svg class="pitch" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="opacity:${op}">
-  <rect x="${m}" y="${y0}" width="${t}" height="${ph}" rx="${t / 2}" fill="${BL}"/>
-  <rect x="${m + pw - t}" y="${y0}" width="${t}" height="${ph}" rx="${t / 2}" fill="${BL}"/>
-  <rect x="${m}" y="${y0}" width="${pw / 2 - gw / 2 - m + m}" height="${t}" rx="${t / 2}" fill="${WH}"/>
-  <rect x="${cx + gw / 2}" y="${y0}" width="${pw / 2 - gw / 2}" height="${t}" rx="${t / 2}" fill="${WH}"/>
-  <rect x="${m}" y="${y0 + ph - t}" width="${pw / 2 - gw / 2}" height="${t}" rx="${t / 2}" fill="${WH}"/>
-  <rect x="${cx + gw / 2}" y="${y0 + ph - t}" width="${pw / 2 - gw / 2}" height="${t}" rx="${t / 2}" fill="${WH}"/>
-  <rect x="${cx - gw / 2 + 6}" y="${y0 - 14}" width="${gw - 12}" height="${t + 14}" fill="none" stroke="${WH}" stroke-width="3"/>
-  <rect x="${cx - gw / 2 + 6}" y="${y0 + ph - t}" width="${gw - 12}" height="${t + 14}" fill="none" stroke="${WH}" stroke-width="3"/>
-  <line x1="${m + t}" y1="${y0 + ph / 2}" x2="${m + pw - t}" y2="${y0 + ph / 2}" stroke="${WH}" stroke-width="3" stroke-dasharray="14 12"/>
-  <circle cx="${cx}" cy="${y0 + ph / 2}" r="${pw * .13}" fill="none" stroke="${WH}" stroke-width="3" stroke-dasharray="14 12"/></svg>`;
+  <polygon points="${m},${y0} ${m + t},${y0 + t} ${m + t},${y0 + ph - t} ${m},${y0 + ph}" fill="${BL}"/>
+  <polygon points="${m + pw},${y0} ${m + pw - t},${y0 + t} ${m + pw - t},${y0 + ph - t} ${m + pw},${y0 + ph}" fill="${BL}"/>
+  <rect x="${m - 2}" y="${y0 + ph / 2 - 4.03}" width="${t + 4}" height="8.07" fill="${WH}"/>
+  <rect x="${m + pw - t - 2}" y="${y0 + ph / 2 - 4.03}" width="${t + 4}" height="8.07" fill="${WH}"/>
+  <path d="M${m} ${y0} L${X1 - r} ${y0} A${r} ${r} 0 0 1 ${X1 - r} ${y0 + t} L${m + t} ${y0 + t} Z" fill="${WH}"/>
+  <path d="M${m + pw} ${y0} L${X2 + r} ${y0} A${r} ${r} 0 0 0 ${X2 + r} ${y0 + t} L${m + pw - t} ${y0 + t} Z" fill="${WH}"/>
+  <path d="M${m} ${y0 + ph} L${X1 - r} ${y0 + ph} A${r} ${r} 0 0 0 ${X1 - r} ${y0 + ph - t} L${m + t} ${y0 + ph - t} Z" fill="${WH}"/>
+  <path d="M${m + pw} ${y0 + ph} L${X2 + r} ${y0 + ph} A${r} ${r} 0 0 1 ${X2 + r} ${y0 + ph - t} L${m + pw - t} ${y0 + ph - t} Z" fill="${WH}"/>
+  <defs><pattern id="net" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 L6 0 M0 0 L0 6" stroke="${WH}" stroke-width=".8" opacity=".75" fill="none"/></pattern></defs>
+  <rect x="${cx - gw / 2 + 6}" y="${y0 - 14}" width="${gw - 12}" height="${t + 14}" fill="url(#net)" stroke="${WH}" stroke-width="3"/>
+  <rect x="${cx - gw / 2 + 6}" y="${y0 + ph - t}" width="${gw - 12}" height="${t + 14}" fill="url(#net)" stroke="${WH}" stroke-width="3"/>
+  <circle cx="${cx + pw * .14}" cy="${y0 + ph * .6}" r="${ph * .015}" fill="${C.red}"/></svg>`;
 };
+
+// The LOCKED pitch standard (Luis, 13 Nov 2026), horizontal, for the navy half of split slides. Same drawing as the ARTE canvas:
+// 45° mitred corners, white halfway band 2.2% of the side, diamond-mesh goals with the crossbar on the barrier's inner edge, small red ball.
+const pitchH = (w = 680) => `<svg width="${w}" height="${Math.round(w * 136 / 228)}" viewBox="-4 0 228 136" style="display:block">
+  <polygon points="6,6 214,6 204,16 16,16" fill="${C.blue}"/><polygon points="6,130 214,130 204,120 16,120" fill="${C.blue}"/>
+  <rect x="107.43" y="6" width="5.13" height="10" fill="#fff"/><rect x="107.43" y="120" width="5.13" height="10" fill="#fff"/>
+  <path d="M6 6 L16 16 L16 45 A5 5 0 0 1 6 45 Z" fill="#F4F6FA"/><path d="M6 130 L16 120 L16 91 A5 5 0 0 0 6 91 Z" fill="#F4F6FA"/>
+  <path d="M214 6 L204 16 L204 45 A5 5 0 0 0 214 45 Z" fill="#F4F6FA"/><path d="M214 130 L204 120 L204 91 A5 5 0 0 1 214 91 Z" fill="#F4F6FA"/>
+  <defs><pattern id="netH" x="-1" y="52" width="2.6" height="2.6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 L2.6 0 M0 0 L0 2.6" stroke="#F4F6FA" stroke-width="0.35" opacity="0.75" fill="none"/></pattern></defs>
+  <rect x="-1" y="52" width="17" height="32" rx="2" fill="url(#netH)" stroke="#F4F6FA" stroke-width="2.5"/>
+  <rect x="204" y="52" width="17" height="32" rx="2" fill="url(#netH)" stroke="#F4F6FA" stroke-width="2.5"/>
+  <circle cx="146" cy="84" r="4.5" fill="${C.red}"/></svg>`;
 
 const frame = (s, inner, W, H) => {
   const accent = s.impact ? C.gold : C.red;
@@ -56,7 +72,8 @@ const frame = (s, inner, W, H) => {
   .photo{position:absolute;inset:0;background-size:cover;background-position:center}
   .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,12,23,.15) 0%,rgba(6,12,23,0) 30%,rgba(6,12,23,.35) 58%,rgba(6,12,23,.92) 100%)}
   .wrap.bottom{justify-content:flex-end}
-  </style></head><body>${inner}<img class="logo" src="${LOGO}">${count}${foot}</body></html>`;
+    body.light .count{color:#3A4356;opacity:1}
+  </style></head><body class="${s.layout} ${s.tone || ''}${s.layout === 'hook' ? ' light' : ''}">${inner}<img class="logo" src="${LOGO}">${count}${foot}</body></html>`;
 };
 
 // One language per image (Luis, 2 Nov 2026): every slide is rendered once in English and once in Spanish.
@@ -64,7 +81,10 @@ const frame = (s, inner, W, H) => {
 const mono = (s, lang) => {
   const pick = k => lang === 'es' ? (s[k + '_es'] ?? s[k]) : s[k];
   return { ...s, main: s[lang], kicker: pick('kicker'), footer: pick('footer'), pill: pick('pill'), title: pick('title'),
-    items: (s.items || []).map(it => it[lang]), html: lang === 'es' ? (s.html_es ?? s.html) : s.html };
+    items: (s.items || []).map(it => it[lang]), html: lang === 'es' ? (s.html_es ?? s.html) : s.html,
+    top: pick('top'), kicker_top: pick('kicker_top'), sub: pick('sub'), name: pick('name'),
+    stats: (s.stats || []).map(x => ({ n: x.n, t: x[lang], red: x.red })),
+    system: lang === 'es' ? 'Construido por el Reto™' : 'Built Through Challenge™' };
 };
 const kick = s => s.kicker ? `<div class="kick">${esc(s.kicker)}</div>` : '';
 const L = {
@@ -74,6 +94,37 @@ const L = {
   quote: s => `${pitch(W, H, .07)}<div class="wrap">${kick(s)}<div class="q">${esc(s.main)}</div><div class="rule" style="margin-bottom:0"></div></div>`,
   cta: s => `${pitch(W, H, .12)}<div class="wrap"><div class="h1" style="font-size:${s.size || 84}px">${esc(s.main)}</div><div class="pill">${esc(s.pill)}</div></div>`,
   photo: s => `<div class="photo" style="background-position:${s.focus || 'center'};background-image:url(data:image/${path.extname(s.image).slice(1).replace('jpg', 'jpeg')};base64,${fs.readFileSync(s.image).toString('base64')})"></div><div class="shade"></div><div class="wrap bottom">${s.kicker ? `<div class="kick" style="color:#fff;border-left:8px solid ${s.impact ? C.gold : C.red};padding-left:18px">${esc(s.kicker)}</div>` : ''}<div class="h1" style="font-size:${s.size || 84}px">${esc(s.main)}</div></div>`,
+  // === THE CAROUSEL SYSTEM (Luis, 13 Nov 2026): hook → proof → ask. See claude/arte-kit.md. ===
+  // HOOK (format D, Contrast): the problem in grey on light, the 3v3PR answer on navy. Fields: kicker_top, top (problem), kicker (default "3v3PR"), en/es (answer).
+  hook: s => `<div style="position:absolute;left:0;right:0;top:0;height:600px;background:#E7EAF0;padding:150px 72px 0;display:flex;flex-direction:column;gap:26px">
+    ${s.kicker_top ? `<div style="font-size:28px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#6B7487">${esc(s.kicker_top)}</div>` : ''}
+    <div class="h1" style="font-size:${s.size_top || 76}px;line-height:1.06;color:#6B7487;white-space:pre-line">${esc(s.top)}</div></div>
+    <div style="position:absolute;left:0;right:0;top:600px;bottom:0;background:${C.navy};padding:90px 72px 0;display:flex;flex-direction:column;gap:26px">
+    <div style="font-size:28px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:${C.red}">${esc(s.kicker || '3v3PR')}</div>
+    <div class="h1" style="font-size:${s.size || 92}px;white-space:pre-line">${esc(s.main)}</div></div>
+    <div style="position:absolute;left:72px;top:560px;width:80px;height:80px;border-radius:40px;background:${C.red};color:#fff;font-size:44px;font-weight:700;display:flex;align-items:center;justify-content:center">↓</div>`,
+  // PROOF (format C, Match facts): kicker + 2×2 number tiles + one line. stats: [{n, en, es, red}] (max 4; red = the number in brand red). Only true format facts.
+  facts: s => `<div style="position:absolute;left:72px;right:72px;top:200px;display:flex;flex-direction:column;gap:40px">
+    ${s.kicker ? `<div class="kick" style="margin:0">${esc(s.kicker)}</div>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px">${s.stats.slice(0, 4).map(x => `<div style="background:#0E1A2E;border:2px solid #1F3155;border-radius:20px;padding:36px 36px 30px;display:flex;flex-direction:column;gap:14px"><div style="font-size:132px;font-weight:700;line-height:.9;color:${x.red ? C.red : '#fff'}">${esc(x.n)}</div><div style="font-size:34px;font-weight:600;color:#C9D6F2;line-height:1.2">${esc(x.t)}</div></div>`).join('')}</div>
+    ${s.main ? `<div class="h1" style="font-size:${s.size || 52}px;line-height:1.1">${esc(s.main)}</div>` : ''}</div>`,
+  // PROOF (format B, Principle card): one of the 14 principle lines, word for word. Fields: n (1–14), name/name_es (chapter title), en/es (the line, in quotes).
+  principle: s => `<div style="position:absolute;left:110px;right:110px;top:190px;bottom:170px;background:#fff;border-radius:36px;display:flex;flex-direction:column;overflow:hidden;color:${C.navy}">
+    <div style="background:${C.blue};color:#fff;padding:40px 56px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:30px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">${esc(s.name)}</div><div style="font-size:64px;font-weight:700;line-height:1">${esc(s.n)}</div></div>
+    <div style="flex-grow:1;padding:56px;display:flex;flex-direction:column;justify-content:center;gap:44px"><div class="q" style="font-size:${s.size || 66}px;line-height:1.1">${esc(s.main)}</div><div style="width:110px;height:10px;background:${C.red}"></div></div>
+    <div style="padding:0 56px 44px;display:flex;justify-content:space-between;font-size:26px;font-weight:600;color:#3A4356"><div>${esc(s.system)}</div><div>${esc(s.n)} / 14</div></div></div>`,
+  // ASK (format C, \"Your field. Our pitch.\" — or format A when tone:\"light\"): 50/50 split, text on blue (or light) top, the locked pitch on navy below, ~70 px gaps.
+  // Fields: kicker (light tone only), en/es (headline), sub/sub_es, pill/pill_es (optional). Footer = descriptor or tagline per the brand rules.
+  ask: s => {
+    const light = s.tone === 'light', ink = light ? C.navy : '#fff';
+    return `<div style="position:absolute;left:0;right:0;top:0;height:675px;background:${light ? '#F4F5F7' : C.blue};color:${ink};padding:${light ? 130 : 140}px 72px 70px;display:flex;flex-direction:column;justify-content:center;gap:${light ? 24 : 30}px">
+    ${s.kicker ? `<div style="font-size:28px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:${light ? C.blue : '#fff'}">${esc(s.kicker)}</div>` : ''}
+    <div class="h1" style="font-size:${s.size || 96}px;white-space:pre-line">${esc(s.main)}</div>
+    ${light ? `<div style="width:120px;height:10px;flex-shrink:0;background:${C.red}"></div>` : ''}
+    ${s.sub ? `<div class="body" style="font-size:${light ? 36 : 40}px;line-height:1.3;color:${light ? '#3A4356' : '#fff'};max-width:880px">${esc(s.sub)}</div>` : ''}
+    ${s.pill ? `<div style="align-self:flex-start;background:${light ? C.red : '#fff'};color:${light ? '#fff' : C.navy};font-size:40px;font-weight:700;padding:26px 48px;border-radius:999px">${esc(s.pill)}</div>` : ''}</div>
+    <div style="position:absolute;left:0;right:0;top:675px;bottom:0;background:${C.navy};display:flex;justify-content:center;padding-top:70px">${pitchH(680)}</div>`;
+  },
   html: s => s.html // custom layout: Arte writes inner HTML using the brand classes and colours above (html / html_es)
 };
 
